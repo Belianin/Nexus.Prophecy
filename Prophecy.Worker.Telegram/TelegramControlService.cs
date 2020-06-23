@@ -68,12 +68,14 @@ namespace Nexus.Prophecy.Worker.Telegram
             var response = await ReplyOnCallback(callbackData).ConfigureAwait(false);
             
             await SendResponseAsync(response, message).ConfigureAwait(false);
+            
+            // todo client.AnswerCallbackQueryAsync()
         }
 
         private async Task<NodeResponse> ReplyOnCallback(CallbackData callback) =>
             callback.Action switch
             {
-                Actions.ListCommands => ListCommands(callback.Service),
+                Actions.ListCommands => GetServiceInfo(callback.Service),
                 Actions.ListServices => ListServices(),
                 Actions.RunCommand => await RunCommandAsync(callback.Service, callback.Action).ConfigureAwait(false),
                 _ => ListServices()
@@ -113,20 +115,26 @@ namespace Nexus.Prophecy.Worker.Telegram
 
         private NodeResponse ListServices()
         {
+            var services = controlService.ListServices().ToArray();
+
+            string FormatService(ServiceInfo s) => $"{s.Name}: {(s.IsRunning ? "ON" : "OFF")}\n{string.Join(", ", s.Commands)}";
+
+            var servicesString = string.Join("\n\n", services.Select((Func<ServiceInfo, string>) FormatService));
+            var text = $"Выберите сервис:\n\n{servicesString}";
             return new NodeResponse
             {
-                Text = "Выберите сервис",
-                Markup = new InlineKeyboardMarkup(controlService.ListServices().Select(s => new InlineKeyboardButton
+                Text = text,
+                Markup = new InlineKeyboardMarkup(services.Select(s => new InlineKeyboardButton
                 {
-                    Text = s,
-                    CallbackData = CallbackParser.CreateCallbackData(s, null, Actions.ListCommands)
+                    Text = s.Name,
+                    CallbackData = CallbackParser.CreateCallbackData(s.Name, null, Actions.ListCommands)
                 }))
             };
         }
 
-        private NodeResponse ListCommands(string service)
+        private NodeResponse GetServiceInfo(string service)
         {
-            var result = controlService.ListCommands(service);
+            var result = controlService.GetServiceInfo(service);
             if (result.IsFail)
                 return new NodeResponse
                 {
@@ -136,7 +144,7 @@ namespace Nexus.Prophecy.Worker.Telegram
             return new NodeResponse()
             {
                 Text = $"Список доступных комманд для {service}",
-                Markup = new InlineKeyboardMarkup(result.Value.Select(c => new InlineKeyboardButton
+                Markup = new InlineKeyboardMarkup(result.Value.Commands.Select(c => new InlineKeyboardButton
                 {
                     Text = c,
                     CallbackData = CallbackParser.CreateCallbackData(service, c, Actions.RunCommand)

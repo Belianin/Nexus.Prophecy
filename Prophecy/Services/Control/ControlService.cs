@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Nexus.Core;
 using Nexus.Prophecy.Configuration;
@@ -12,6 +13,7 @@ namespace Nexus.Prophecy.Services.Control
     {
         private readonly ProphecySettings settings;
         private const string DirectoryName = "Commands";
+        private Dictionary<string, Process> liveServices = new Dictionary<string, Process>();
 
         public ControlService(ProphecySettings settings)
         {
@@ -57,17 +59,57 @@ namespace Nexus.Prophecy.Services.Control
             return Result<string>.Ok(string.Join(Environment.NewLine, output));
         }
 
-        public IEnumerable<string> ListServices()
+        public async Task<Result<ServiceInfo>> StartAsync(string service)
         {
-            return settings.Services.Keys;
+            // Валидация
+
+            var processInfo = new ProcessStartInfo(settings.Services[service].Path)
+            {
+                CreateNoWindow = false,
+                UseShellExecute = true,
+                RedirectStandardError = false,
+                RedirectStandardOutput = false
+            };
+
+            var process = Process.Start(processInfo);
+            liveServices[service] = process;
+
+            return GetServiceInfo(service);
         }
 
-        public Result<IEnumerable<string>> ListCommands(string service)
+        public async Task<Result<ServiceInfo>> StopAsync(string service)
         {
-            if (!settings.Services.TryGetValue(service, out var commands))
+            if (!liveServices.TryGetValue(service, out var process))
+                return $"{service} is already stopped";
+
+            await Task.Run(() =>
+            {
+                process.Close();
+                process.WaitForExit();
+                liveServices.Remove(service);
+            }).ConfigureAwait(false);
+
+            return GetServiceInfo(service);
+        }
+
+        public IEnumerable<ServiceInfo> ListServices()
+        {
+            return settings.Services.Select(s => GetServiceInfo(s.Key))
+                .Select(s => s.Value); // meh
+        }
+
+        public Result<ServiceInfo> GetServiceInfo(string service)
+        {
+            if (!settings.Services.TryGetValue(service, out var serviceInfo))
                 return $"Unknown service \"{service}\"";
 
-            return commands.Commands.Keys;
+            var commands = serviceInfo.Commands != null ? serviceInfo.Commands.Keys.ToArray() : new string[0]; 
+            return new ServiceInfo
+            {
+                Commands = commands,
+                IsRunning = liveServices.ContainsKey(service),
+                Name = service
+            };
         }
 
         public Result<string> ShowCommand(string service, string command)
