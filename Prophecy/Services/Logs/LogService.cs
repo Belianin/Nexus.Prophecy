@@ -20,18 +20,33 @@ namespace Nexus.Prophecy.Services.Logs
 
         public Result<IEnumerable<string>> GetLogs(string service, DateTime @from, DateTime to)
         {
-            if (!registeredServices.ContainsKey(service.ToLower()))
+            if (!registeredServices.TryGetValue(service.ToLower(), out var serviceFolder))
                 return $"Service \"{service}\" not found";
 
-            var filename = registeredServices[service.ToLower()] + "/" + FileLog.GetFileName(from);
-            Console.WriteLine(filename);
-            if (!File.Exists(filename))
+            var filenames = GetMonthsBetweenPeriod(from, to)
+                .Select(d => Path.Combine(serviceFolder, FileLog.GetFileName(d)))
+                .ToArray();
+            
+            if (filenames.All(f => !File.Exists(f)))
                 return $"No logs for this period";
 
-            return Result.Ok(File
-                .ReadLines(filename)
+            var logs = filenames
+                .Where(File.Exists)
+                .SelectMany(File.ReadLines)
                 .SkipWhile(s => LogFormatter.GetLogTime(s) < from)
-                .TakeWhile(s => LogFormatter.GetLogTime(s) <= to));
+                .TakeWhile(s => LogFormatter.GetLogTime(s) <= to);
+            
+            return Result.Ok(logs);
+        }
+
+        private static IEnumerable<DateTime> GetMonthsBetweenPeriod(DateTime @from, DateTime to)
+        {
+            var dateTime = from;
+            do
+            {
+                yield return dateTime;
+                dateTime = dateTime.AddMonths(1);
+            } while (dateTime.Year <= to.Year && dateTime.Month < to.Month);
         }
     }
 }
