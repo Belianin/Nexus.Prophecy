@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Nexus.Prophecy.Configuration;
+using Nexus.Prophecy.Services.Control;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -8,16 +9,16 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
 {
     public class ServicesNode : INode
     {
-        private readonly ProphecySettings settings;
+        private readonly IControlService service;
 
-        public ServicesNode(ProphecySettings settings)
+        public ServicesNode(IControlService service)
         {
-            this.settings = settings;
+            this.service = service;
         }
 
-        public Task<NodeResponse> ReplyAsync(Message message)
+        public async Task<NodeResponse> ReplyAsync(Message message)
         {
-            throw new System.NotImplementedException();
+            return Response;
         }
 
         public NodeResponse Response => new NodeResponse
@@ -29,10 +30,10 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
 
         private IReplyMarkup GetMenu()
         {
-            return new InlineKeyboardMarkup(settings.Services.Keys.Select(s => new InlineKeyboardButton
+            return new InlineKeyboardMarkup(service.ListServices().Select(s => new InlineKeyboardButton
             {
                 Text = s,
-                CallbackData = CallbackParser.CreateCallbackData(s, null, "list")
+                CallbackData = CallbackParser.CreateCallbackData(s, null, Actions.ListCommands)
             }));
         }
     }
