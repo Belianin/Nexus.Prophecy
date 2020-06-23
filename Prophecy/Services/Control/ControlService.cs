@@ -12,8 +12,10 @@ namespace Nexus.Prophecy.Services.Control
     public class ControlService : IControlService
     {
         private readonly ProphecySettings settings;
+        private readonly Dictionary<string, Process[]> liveServices = new Dictionary<string, Process[]>();
+        // нужен ли словарь вообще
+        
         private const string DirectoryName = "Commands";
-        private Dictionary<string, Process> liveServices = new Dictionary<string, Process>();
 
         public ControlService(ProphecySettings settings)
         {
@@ -72,20 +74,24 @@ namespace Nexus.Prophecy.Services.Control
             };
 
             var process = Process.Start(processInfo);
-            liveServices[service] = process;
+            liveServices[service] = new [] {process};
 
             return GetServiceInfo(service);
         }
 
         public async Task<Result<ServiceInfo>> StopAsync(string service)
         {
-            if (!liveServices.TryGetValue(service, out var process))
+            if (!liveServices.TryGetValue(service, out var processes))
                 return $"{service} is already stopped";
 
             await Task.Run(() =>
             {
-                process.Close();
-                process.WaitForExit();
+                foreach (var process in processes)
+                {
+                    process.Close();
+                    process.WaitForExit();
+                }
+                
                 liveServices.Remove(service);
             }).ConfigureAwait(false);
 
@@ -95,7 +101,7 @@ namespace Nexus.Prophecy.Services.Control
         public IEnumerable<ServiceInfo> ListServices()
         {
             return settings.Services.Select(s => GetServiceInfo(s.Key))
-                .Select(s => s.Value); // meh
+                .Select(s => s.Value); // meh всегда велью у резалта
         }
 
         public Result<ServiceInfo> GetServiceInfo(string service)
@@ -103,6 +109,13 @@ namespace Nexus.Prophecy.Services.Control
             if (!settings.Services.TryGetValue(service, out var serviceInfo))
                 return $"Unknown service \"{service}\"";
 
+            if (!liveServices.ContainsKey(service))
+            {
+                var processes = Process.GetProcessesByName(service);
+                if (processes.Length != 0)
+                    liveServices[service] = processes;
+            }
+            
             var commands = serviceInfo.Commands != null ? serviceInfo.Commands.Keys.ToArray() : new string[0]; 
             return new ServiceInfo
             {

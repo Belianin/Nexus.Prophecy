@@ -4,7 +4,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <Nullable>enable</Nullable>
         <AssemblyName>Nexus.Prophecy.Api</AssemblyName>
-        <RootNamespace>Nexus.Prophecy.Api</RootNamespace>
+        <RootNamespace>Prophecy</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
