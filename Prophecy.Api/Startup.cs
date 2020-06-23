@@ -50,7 +50,7 @@ namespace Nexus.Prophecy
             IWebHostEnvironment env,
             ILog log)
         {
-            log.Info("Starting Prophecy");
+            log.Info("Starting Prophecy.Api");
             
             lifetime.ApplicationStopping.Register(SettingsManager.SaveSettings);
             

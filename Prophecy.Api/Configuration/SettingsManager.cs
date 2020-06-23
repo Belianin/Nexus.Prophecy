@@ -13,7 +13,7 @@ namespace Nexus.Prophecy.Configuration
             if (settings == null)
             {
                 if (!File.Exists(Filename))
-                    throw new IOException($"No Prophecy settings file \"{Filename}\"");
+                    throw new IOException($"No Prophecy.Api settings file \"{Filename}\"");
 
                 settings = JsonConvert.DeserializeObject<ProphecySettings>(File.ReadAllText(Filename));
             }
