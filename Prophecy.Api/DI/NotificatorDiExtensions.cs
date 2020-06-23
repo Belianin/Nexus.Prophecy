@@ -6,7 +6,7 @@ using Nexus.Prophecy.Services.Notifications;
 using Nexus.Prophecy.Services.Notifications.Telegram;
 using Telegram.Bot;
 
-namespace Nexus.Prophecy.DI
+namespace Nexus.Prophecy.Api.DI
 {
     public static class NotificatorDiExtensions
     {

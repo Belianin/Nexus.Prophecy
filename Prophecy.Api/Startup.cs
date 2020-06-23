@@ -5,13 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Nexus.Logging;
 using Nexus.Logging.Console;
+using Nexus.Prophecy.Api.DI;
 using Nexus.Prophecy.Configuration;
-using Nexus.Prophecy.DI;
 using Nexus.Prophecy.Services.Control;
 using Nexus.Prophecy.Services.Logs;
 using Telegram.Bot;
 
-namespace Nexus.Prophecy
+namespace Nexus.Prophecy.Api
 {
     public class Startup
     {

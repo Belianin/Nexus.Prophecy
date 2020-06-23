@@ -4,7 +4,7 @@ using Nexus.Logging;
 using Nexus.Logging.Utils;
 using Nexus.Prophecy.Services.Logs;
 
-namespace Nexus.Prophecy.Controllers
+namespace Nexus.Prophecy.Api.Controllers
 {
     [Route("api/v1/logs")]
     public class LogsController : Controller

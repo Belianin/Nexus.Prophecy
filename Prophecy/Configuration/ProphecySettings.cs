@@ -11,6 +11,7 @@ namespace Nexus.Prophecy.Configuration
         public class ServiceSettings
         {
             public string Logs { get; set; }
+            public string Path { get; set; }
             public Dictionary<string, string> Commands { get; set; }
         }
         

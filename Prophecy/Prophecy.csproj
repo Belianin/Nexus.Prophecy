@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>Nexus.Prophecy</AssemblyName>
+        <RootNamespace>Nexus.Prophecy</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Folder Include="Services" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+      <PackageReference Include="Nexus.Core" Version="1.0.0" />
+      <PackageReference Include="Nexus.Logging" Version="1.0.2" />
+      <PackageReference Include="System.Text.Json" Version="4.7.2" />
+      <PackageReference Include="Telegram.Bot" Version="15.6.0" />
+    </ItemGroup>
+
+</Project>

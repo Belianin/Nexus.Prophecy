@@ -1,7 +1,6 @@
 using System.Linq;
-using Telegram.Bot.Types;
 
-namespace Nexus.Prophecy.Services.Control.Telegram.Nodes
+namespace Nexus.Prophecy.Telegram.Nodes
 {
     public static class CallbackParser
     {

@@ -4,7 +4,7 @@ using Nexus.Prophecy.Configuration;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Nexus.Prophecy.Services.Control.Telegram.Nodes
+namespace Nexus.Prophecy.Telegram.Nodes
 {
     public class ServicesNode : INode
     {

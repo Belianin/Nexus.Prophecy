@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>Nexus.Prophecy.Telegram</AssemblyName>
+        <RootNamespace>Nexus.Prophecy.Telegram</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Prophecy\Prophecy.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.5" />
+      <PackageReference Include="Nexus.Logging" Version="1.0.2" />
+      <PackageReference Include="Telegram.Bot" Version="15.6.0" />
+    </ItemGroup>
+
+</Project>

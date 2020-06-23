@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nexus.Logging;
 using Nexus.Prophecy.Services.Notifications;
 
-namespace Nexus.Prophecy.Controllers
+namespace Nexus.Prophecy.Api.Controllers
 {
     [Route("api/v1")]
     public class NotifyController : Controller

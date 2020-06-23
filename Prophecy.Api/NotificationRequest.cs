@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Nexus.Logging.Utils;
 
-namespace Nexus.Prophecy
+namespace Nexus.Prophecy.Api
 {
     public class NotificationRequest
     {

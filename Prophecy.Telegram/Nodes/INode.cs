@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 
-namespace Nexus.Prophecy.Services.Control.Telegram.Nodes
+namespace Nexus.Prophecy.Telegram.Nodes
 {
     public interface INode
     {
