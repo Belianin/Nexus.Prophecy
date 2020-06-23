@@ -1,6 +1,6 @@
 using System.Linq;
 
-namespace Nexus.Prophecy.Telegram.Nodes
+namespace Nexus.Prophecy.Worker.Telegram.Nodes
 {
     public static class CallbackParser
     {

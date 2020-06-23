@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <AssemblyName>Nexus.Prophecy.Telegram</AssemblyName>
-        <RootNamespace>Nexus.Prophecy.Telegram</RootNamespace>
+        <AssemblyName>Nexus.Prophecy.Worker.Telegram</AssemblyName>
+        <RootNamespace>Nexus.Prophecy.Worker.Telegram</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

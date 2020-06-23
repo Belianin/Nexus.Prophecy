@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.Api", "Prophecy.Ap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy", "Prophecy\Prophecy.csproj", "{5B1EC9CF-1D6D-424C-B405-34A239DCD966}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.Telegram", "Prophecy.Telegram\Prophecy.Telegram.csproj", "{8ED5EB84-7A83-45AA-A1AA-ACE0F6731B88}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.Worker.Telegram", "Prophecy.Worker.Telegram\Prophecy.Worker.Telegram.csproj", "{8ED5EB84-7A83-45AA-A1AA-ACE0F6731B88}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.Logging", "Prophecy.Logging\Prophecy.Logging.csproj", "{BD68E217-750E-42AF-9407-65F3662F9FCF}"
 EndProject

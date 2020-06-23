@@ -1,6 +1,6 @@
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Nexus.Prophecy.Telegram.Nodes
+namespace Nexus.Prophecy.Worker.Telegram.Nodes
 {
     public class NodeResponse
     {

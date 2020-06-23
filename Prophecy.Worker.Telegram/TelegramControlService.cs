@@ -6,11 +6,11 @@ using Microsoft.Extensions.Hosting;
 using Nexus.Logging;
 using Nexus.Prophecy.Configuration;
 using Nexus.Prophecy.Services.Control;
-using Nexus.Prophecy.Telegram.Nodes;
+using Nexus.Prophecy.Worker.Telegram.Nodes;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
-namespace Nexus.Prophecy.Telegram
+namespace Nexus.Prophecy.Worker.Telegram
 {
     public class TelegramControlService : BackgroundService
     {

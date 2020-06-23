@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Prophecy.Telegram\Prophecy.Telegram.csproj" />
+      <ProjectReference Include="..\Prophecy.Worker.Telegram\Prophecy.Worker.Telegram.csproj" />
       <ProjectReference Include="..\Prophecy\Prophecy.csproj" />
     </ItemGroup>
 

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Nexus.Prophecy.Telegram;
+using Nexus.Prophecy.Worker.Telegram;
 
 namespace Nexus.Prophecy.Api
 {
