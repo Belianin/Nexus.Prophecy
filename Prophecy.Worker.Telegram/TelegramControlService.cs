@@ -30,8 +30,8 @@ namespace Nexus.Prophecy.Worker.Telegram
             this.settings = settings;
             this.controlService = controlService;
 
-            client.OnMessage += async (s, e) => await OnMessageAsync(e.Message).ConfigureAwait(false);
-            client.OnCallbackQuery += async (s, e) => await OnCallbackAsync(e.CallbackQuery).ConfigureAwait(false);
+            client.OnMessage += async (s, e) => await Task.Run(() => OnMessageAsync(e.Message)).ConfigureAwait(false);
+            client.OnCallbackQuery += async (s, e) => await Task.Run(() => OnCallbackAsync(e.CallbackQuery)).ConfigureAwait(false);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
