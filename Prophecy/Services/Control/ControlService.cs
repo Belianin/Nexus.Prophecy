@@ -70,18 +70,25 @@ namespace Nexus.Prophecy.Services.Control
             if (serviceInfo.Value.IsRunning)
                 return $"{service} is already running";
 
-            var processInfo = new ProcessStartInfo(settings.Services[service].Path)
+            try
             {
-                CreateNoWindow = false,
-                UseShellExecute = true,
-                RedirectStandardError = false,
-                RedirectStandardOutput = false
-            };
+                var processInfo = new ProcessStartInfo(settings.Services[service].Path)
+                {
+                    CreateNoWindow = false,
+                    UseShellExecute = true,
+                    RedirectStandardError = false,
+                    RedirectStandardOutput = false
+                };
 
-            var process = Process.Start(processInfo);
-            liveServices[service] = new [] {process};
+                var process = Process.Start(processInfo);
+                liveServices[service] = new[] {process};
 
-            return GetServiceInfo(service);
+                return GetServiceInfo(service);
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
         }
 
         public async Task<Result<ServiceInfo>> StopAsync(string service)
