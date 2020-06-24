@@ -93,7 +93,7 @@ namespace Nexus.Prophecy.Worker.Telegram
 
         private async Task OnMessageAsync(Message message)
         {
-            log.Info($"Received a request: {message.Text} from {AuthorToString(message)}");
+            log.Info($"[{message.Chat.Id}]: Received a request: {message.Text} from {AuthorToString(message)}");
             if (!settings.Interface.Telegram.Admins.Contains(message.Chat.Id))
             {
                 log.Important($"Forbidden access to telegram user \"{message.Chat.Id}\" {message.From.Username ?? "(no nickname)"}");
