@@ -13,7 +13,7 @@
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
       <PackageReference Include="Nexus.Core" Version="1.0.0" />
-      <PackageReference Include="Nexus.Logging" Version="1.0.2" />
+      <PackageReference Include="Nexus.Logging" Version="1.0.3" />
       <PackageReference Include="System.Text.Json" Version="4.7.2" />
       <PackageReference Include="Telegram.Bot" Version="15.7.1" />
     </ItemGroup>

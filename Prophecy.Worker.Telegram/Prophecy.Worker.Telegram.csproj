@@ -12,7 +12,7 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.5" />
-      <PackageReference Include="Nexus.Logging" Version="1.0.2" />
+      <PackageReference Include="Nexus.Logging" Version="1.0.3" />
       <PackageReference Include="Telegram.Bot" Version="15.7.1" />
     </ItemGroup>
 
