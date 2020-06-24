@@ -188,13 +188,13 @@ namespace Nexus.Prophecy.Worker.Telegram
             var startStopButton = result.Value.IsRunning
                 ? new InlineKeyboardButton
                 {
-                    Text = "Start",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Start)
+                    Text = "Stop",
+                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Stop)
                 }
                 : new InlineKeyboardButton
                 {
-                    Text = "Stop",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Stop)
+                    Text = "Start",
+                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Start)
                 };
 
             var markup = new[]
