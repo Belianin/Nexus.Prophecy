@@ -67,7 +67,7 @@ namespace Nexus.Prophecy.Services.Control
             if (serviceInfo.IsFail)
                 return serviceInfo;
             
-            if (!serviceInfo.Value.IsRunning) // опять сразу р
+            if (serviceInfo.Value.IsRunning)
                 return $"{service} is already running";
 
             var processInfo = new ProcessStartInfo(settings.Services[service].Path)
