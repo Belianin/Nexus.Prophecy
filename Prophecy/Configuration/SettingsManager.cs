@@ -23,7 +23,7 @@ namespace Nexus.Prophecy.Configuration
 
         public static void SaveSettings()
         {
-            File.WriteAllText(Filename, JsonConvert.SerializeObject(settings));
+            File.WriteAllText(Filename, JsonConvert.SerializeObject(settings, Formatting.Indented));
         }
     }
 }
