@@ -6,6 +6,5 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
     {
         public string Text { get; set; }
         public IReplyMarkup Markup { get; set; }
-        public INode NextNode { get; set; }
     }
 }

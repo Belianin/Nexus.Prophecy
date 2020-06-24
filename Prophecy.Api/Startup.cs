@@ -48,11 +48,13 @@ namespace Nexus.Prophecy.Api
             IApplicationBuilder app,
             IHostApplicationLifetime lifetime,
             IWebHostEnvironment env,
-            ILog log)
+            ILog log,
+            ITelegramBotClient telegramClient)
         {
             log.Info("Starting Prophecy.Api");
             
             lifetime.ApplicationStopping.Register(SettingsManager.SaveSettings);
+            lifetime.ApplicationStopping.Register(() => telegramClient?.StopReceiving());
             
             if (env.IsDevelopment())
             {

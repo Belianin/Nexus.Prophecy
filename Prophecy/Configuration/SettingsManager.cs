@@ -6,7 +6,7 @@ namespace Nexus.Prophecy.Configuration
     public static class SettingsManager
     {
         private static ProphecySettings settings = null!;
-        private const string Filename = "prophecy.json"; 
+        public static string Filename { get; set; } = "prophecy.json"; 
         
         public static ProphecySettings GetSettings()
         {

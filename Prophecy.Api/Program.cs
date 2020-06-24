@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nexus.Prophecy.Configuration;
 using Nexus.Prophecy.Worker.Telegram;
 
 namespace Nexus.Prophecy.Api
@@ -10,6 +11,8 @@ namespace Nexus.Prophecy.Api
     {
         public static void Main(string[] args)
         {
+            if (args.Length > 0)
+                SettingsManager.Filename = args[0];
             CreateHostBuilder(args).Build().Run();
         }
 

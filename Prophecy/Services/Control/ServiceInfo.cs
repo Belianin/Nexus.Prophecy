@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Nexus.Prophecy.Configuration;
 
 namespace Nexus.Prophecy.Services.Control
 {
@@ -6,6 +7,7 @@ namespace Nexus.Prophecy.Services.Control
     {
         public string Name { get; set; }
         public bool IsRunning { get; set; }
-        public IEnumerable<string> Commands { get; set; }
+        public ServiceMetaInfo MetaInfo { get; set; }
+        public Dictionary<string, string> Commands { get; set; }
     }
 }

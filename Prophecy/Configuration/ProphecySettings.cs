@@ -5,6 +5,7 @@ namespace Nexus.Prophecy.Configuration
 {
     public class ProphecySettings
     {
+        public StartUpSettings StartUp { get; set; }
         public Dictionary<string, ServiceSettings> Services { get; set; }
         public InterfaceSettings Interface { get; set; }
         
@@ -12,9 +13,10 @@ namespace Nexus.Prophecy.Configuration
         {
             public string Logs { get; set; }
             public string Path { get; set; }
+            public ServiceMetaInfo MetaInfo { get; set; }
             public Dictionary<string, string> Commands { get; set; }
         }
-        
+
         public class InterfaceSettings
         {
             public TelegramSettings Telegram { get; set; }
@@ -26,6 +28,16 @@ namespace Nexus.Prophecy.Configuration
                 public long[] LogChannels { get; set; }
             }
         }
+
+        public class StartUpSettings
+        {
+            public string[] Services { get; set; }
+        }
+    }
+
+    public class ServiceMetaInfo
+    {
+        public string Url { get; set; }
     }
 
     public static class ProphecySettingsExtensions

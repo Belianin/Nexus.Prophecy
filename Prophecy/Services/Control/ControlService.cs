@@ -63,7 +63,12 @@ namespace Nexus.Prophecy.Services.Control
 
         public async Task<Result<ServiceInfo>> StartAsync(string service)
         {
-            // Валидация
+            var serviceInfo = GetServiceInfo(service);
+            if (serviceInfo.IsFail)
+                return serviceInfo;
+            
+            if (!serviceInfo.Value.IsRunning) // опять сразу р
+                return $"{service} is already running";
 
             var processInfo = new ProcessStartInfo(settings.Services[service].Path)
             {
@@ -106,7 +111,7 @@ namespace Nexus.Prophecy.Services.Control
 
         public Result<ServiceInfo> GetServiceInfo(string service)
         {
-            if (!settings.Services.TryGetValue(service, out var serviceInfo))
+            if (!settings.Services.TryGetValue(service, out var serviceSettings))
                 return $"Unknown service \"{service}\"";
 
             if (!liveServices.ContainsKey(service))
@@ -116,22 +121,16 @@ namespace Nexus.Prophecy.Services.Control
                     liveServices[service] = processes;
             }
             
-            var commands = serviceInfo.Commands != null ? serviceInfo.Commands.Keys.ToArray() : new string[0]; 
             return new ServiceInfo
             {
-                Commands = commands,
+                Commands = serviceSettings.Commands ?? new Dictionary<string, string>(),
                 IsRunning = liveServices.ContainsKey(service),
-                Name = service
+                Name = service,
+                MetaInfo = new ServiceMetaInfo
+                {
+                    Url = serviceSettings.MetaInfo?.Url ?? string.Empty
+                }
             };
-        }
-
-        public Result<string> ShowCommand(string service, string command)
-        {
-            var filename = TryGetCommandFilename(service, command);
-            if (filename.IsFail)
-                return filename;
-
-            return Result<string>.Ok(File.ReadAllText(filename));
         }
 
         public Result RemoveCommand(string service, string command)

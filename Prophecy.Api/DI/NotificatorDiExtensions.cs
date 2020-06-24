@@ -18,8 +18,10 @@ namespace Nexus.Prophecy.Api.DI
                 var telegramClient = sp.GetRequiredService<ITelegramBotClient>();
                 var settings = sp.GetRequiredService<ProphecySettings>().Interface;
 
-                var notifiers = new List<INotificator>();
-                notifiers.Add(new TelegramNotificator(telegramClient, settings.Telegram.LogChannels, log));
+                var notifiers = new List<INotificator>
+                {
+                    new TelegramNotificator(telegramClient, settings.Telegram.LogChannels, log)
+                };
 
                 return new NotificationService(notifiers);
             });

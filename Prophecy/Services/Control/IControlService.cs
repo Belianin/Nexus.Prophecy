@@ -11,7 +11,6 @@ namespace Nexus.Prophecy.Services.Control
         IEnumerable<ServiceInfo> ListServices();
         Task<Result<string>> RunCommandAsync(string service, string command);
         Result<ServiceInfo> GetServiceInfo(string service);
-        Result<string> ShowCommand(string service, string command);
         Result RemoveCommand(string service, string command);
         Result UpdateCommand(string service, string command, string commandBody);
     }

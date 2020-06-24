@@ -6,6 +6,7 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
     {
         public static string CreateCallbackData(string service, string command, string action)
         {
+            // не хардкодить
             return $"service={service};command={command ?? string.Empty};action={action}";
         }
 

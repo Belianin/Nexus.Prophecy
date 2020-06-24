@@ -10,13 +10,14 @@ namespace Nexus.Logging.Prophecy
     {
         private readonly HttpClient client;
         private readonly string url;
-        private readonly ILog outerLog;
+        private readonly ILog log;
 
-        public ProphecyLog(string url, ILog outerLog)
+        public ProphecyLog(string url, ILog log)
         {
-            this.client = new HttpClient();
+            client = new HttpClient();
+            
             this.url = url;
-            this.outerLog = outerLog;
+            this.log = log;
         }
 
         protected override void InnerLog(LogEvent logEvent)
@@ -33,11 +34,11 @@ namespace Nexus.Logging.Prophecy
                 var result = client.PostAsync($"{url}/api/v1/notify", content)
                     .GetAwaiter().GetResult();
                 
-                outerLog.Info(result.StatusCode.ToString());
+                log.Info(result.StatusCode.ToString());
             }
             catch (Exception e)
             {
-                outerLog.Fatal($"Failed to send request to Prophecy: {e.Message}");
+                log.Fatal($"Failed to send request to Prophecy: {e.Message}");
             }
         }
 
