@@ -56,9 +56,9 @@ namespace Nexus.Prophecy.Worker.Telegram
         private async Task OnCallbackAsync(CallbackQuery callback)
         {
             var message = callback.Message;
-            if (!settings.Interface.Telegram.Admins.Contains(message.From.Id))
+            if (!settings.Interface.Telegram.Admins.Contains(message.Chat.Id))
             {
-                log.Important($"Forbidden access to telegram user \"{message.From.Id}\" {message.From.Username ?? "(no nickname)"}");
+                log.Important($"Forbidden access to telegram user \"{message.Chat.Id}\" {message.From.Username ?? "(no nickname)"}");
                 await client.SendTextMessageAsync(message.Chat.Id, $"Доступ с id \"{message.Chat.Id}\" не разрешён")
                     .ConfigureAwait(false);
                 return;
