@@ -8,6 +8,7 @@ namespace Nexus.Prophecy.Services.Control
     {
         Task<Result<ServiceInfo>> StartAsync(string service);
         Task<Result<ServiceInfo>> StopAsync(string service);
+        Task<Result<string>> BuildAsync(string service);
         IEnumerable<ServiceInfo> ListServices();
         Task<Result<string>> RunCommandAsync(string service, string command);
         Result<ServiceInfo> GetServiceInfo(string service);

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Text;
 using System.Threading.Tasks;
 using Nexus.Core;
 using Nexus.Prophecy.Configuration;
@@ -13,8 +14,6 @@ namespace Nexus.Prophecy.Services.Control
     public class ControlService : IControlService
     {
         private readonly ProphecySettings settings;
-        private readonly Dictionary<string, Process[]> liveServices = new Dictionary<string, Process[]>();
-        // нужен ли словарь вообще
         
         private const string DirectoryName = "Commands";
 
@@ -31,70 +30,51 @@ namespace Nexus.Prophecy.Services.Control
             }
         }
 
-        public async Task<Result<string>> RunCommandAsync(string service, string command)
+        public Task<Result<string>> RunCommandAsync(string service, string command)
         {
             var filename = TryGetCommandFilename(service, command);
-            if (filename.IsFail)
-                return filename;
-
-            var processInfo = new ProcessStartInfo(filename)
-            {
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            };
-
-            var output = new List<string>();
-            await Task.Run(() =>
-            {
-                var process = Process.Start(processInfo);
-
-                process.OutputDataReceived += (sender, e) => output.Add($"[OUT]: {e.Data}");
-                process.BeginOutputReadLine();
-                process.ErrorDataReceived += (sender, e) => output.Add($"[ERR]: {e.Data}");
-                process.BeginErrorReadLine();
             
-                process.WaitForExit();
-                process.Close();
-            }).ConfigureAwait(false);
-
-            return Result<string>.Ok(string.Join(Environment.NewLine, output));
+            return filename.IsFail ? Task.FromResult(filename) : RunProcessAsync(command);
         }
 
-        public async Task<Result<ServiceInfo>> StartAsync(string service)
+        public Task<Result<ServiceInfo>> StartAsync(string service)
         {
             var serviceInfo = GetServiceInfo(service);
             if (serviceInfo.IsFail)
-                return serviceInfo;
+                return Task.FromResult(serviceInfo);
             
             if (serviceInfo.Value.IsRunning)
-                return $"{service} is already running";
+                return Task.FromResult(Result<ServiceInfo>.Fail($"{service} is already running"));
 
-            try
+            var paths = settings.GetServiceFullPath(service);
+
+            return Task.Run(() =>
             {
-                var processInfo = new ProcessStartInfo(settings.Services[service].Path)
+                try
                 {
-                    CreateNoWindow = false,
-                    UseShellExecute = true,
-                    RedirectStandardError = false,
-                    RedirectStandardOutput = false
-                };
+                    var processInfo = new ProcessStartInfo(paths.Executable)
+                    {
+                        CreateNoWindow = false,
+                        UseShellExecute = true,
+                        RedirectStandardError = false,
+                        RedirectStandardOutput = false
+                    };
 
-                var process = Process.Start(processInfo);
-                liveServices[service] = new[] {process};
+                    Process.Start(processInfo);
 
-                return GetServiceInfo(service);
-            }
-            catch (Exception e)
-            {
-                return e.Message;
-            }
+                    return GetServiceInfo(service);
+                }
+                catch (Exception e)
+                {
+                    return e.Message;
+                }
+            });
         }
 
         public async Task<Result<ServiceInfo>> StopAsync(string service)
         {
-            if (!liveServices.TryGetValue(service, out var processes))
+            var processes = Process.GetProcessesByName(service);
+            if (processes.Length == 0)
                 return $"{service} is already stopped";
 
             await Task.Run(() =>
@@ -105,16 +85,31 @@ namespace Nexus.Prophecy.Services.Control
                     process.WaitForExit();
                 }
                 
-                liveServices.Remove(service);
             }).ConfigureAwait(false);
 
             return GetServiceInfo(service);
         }
 
+        public Task<Result<string>> BuildAsync(string service)
+        {
+            var serviceInfoResult = GetServiceInfo(service);
+            if (serviceInfoResult.IsFail)
+                return Task.FromResult(Result<string>.Fail(serviceInfoResult.Error));
+            var serviceInfo = serviceInfoResult.Value;
+
+            var script = new StringBuilder()
+                .AppendLine("git reset --hard HEAD")
+                .AppendLine("git pull")
+                .AppendLine("dotnet build -c Release")
+                .ToString();
+
+            return RunProcessAsync("cmd.exe", script, serviceInfo.Path);
+        }
+
         public IEnumerable<ServiceInfo> ListServices()
         {
             return settings.Services.Select(s => GetServiceInfo(s.Key))
-                .Select(s => s.Value); // meh всегда велью у резалта
+                .Select(s => s.Value);
         }
 
         public Result<ServiceInfo> GetServiceInfo(string service)
@@ -122,25 +117,21 @@ namespace Nexus.Prophecy.Services.Control
             if (!settings.Services.TryGetValue(service, out var serviceSettings))
                 return $"Unknown service \"{service}\"";
 
-            if (!liveServices.ContainsKey(service))
-            {
-                var processes = Process.GetProcessesByName(service);
-                if (processes.Length != 0)
-                    liveServices[service] = processes;
-            }
+            var processes = Process.GetProcessesByName(service);
+            var isRunning = processes.Length != 0;
             
             return new ServiceInfo
             {
                 Commands = serviceSettings.Commands ?? new Dictionary<string, string>(),
-                IsRunning = liveServices.ContainsKey(service),
+                IsRunning = isRunning,
                 Name = service,
+                Path = serviceSettings.Path,
                 MetaInfo = new ServiceMetaInfo
                 {
-                    Url = serviceSettings.MetaInfo?.Url ?? string.Empty
+                    Url = serviceSettings.MetaInfo?.Url ?? string.Empty,
+                    Project = serviceSettings.MetaInfo?.Project
                 },
-                MemoryUsage = liveServices.TryGetValue(service, out var procs) 
-                    ? GetMemoryUsage(procs)
-                    : 0
+                MemoryUsage = GetMemoryUsage(processes)
             };
         }
 
@@ -167,25 +158,6 @@ namespace Nexus.Prophecy.Services.Control
             return Result.Ok();
         }
 
-        private Result<string> TryGetCommandFilename(string service, string command)
-        {
-            if (!settings.Services.TryGetValue(service, out var commands))
-                return Result.Fail<string>($"Unknown service \"{service}\"");
-            
-            if (!commands.Commands.TryGetValue(command, out var filename))
-                return Result<string>.Fail($"Unknown command \"{filename}\"");
-
-            var path = Path.Combine(DirectoryName, service, filename);
-            return !File.Exists(path) 
-                ? Result<string>.Fail($"Missing file \"{path}\"") 
-                : Result<string>.Ok(path);
-        }
-
-        private long GetMemoryUsage(IEnumerable<Process> processes)
-        {
-            return processes.Sum(p => p.PrivateMemorySize64);
-        }
-
         public (long total, long free) GetSystemMemoryInfo()
         {
             var winQuery = new ObjectQuery("SELECT * FROM Win32_LogicalMemoryConfiguration");
@@ -205,6 +177,71 @@ namespace Nexus.Prophecy.Services.Control
             }
 
             return (total, free);
+        }
+
+        private Result<string> TryGetCommandFilename(string service, string command)
+        {
+            if (!settings.Services.TryGetValue(service, out var commands))
+                return Result.Fail<string>($"Unknown service \"{service}\"");
+            
+            if (!commands.Commands.TryGetValue(command, out var filename))
+                return Result<string>.Fail($"Unknown command \"{command}\"");
+
+            var path = Path.Combine(DirectoryName, service, filename);
+            return !File.Exists(path) 
+                ? Result<string>.Fail($"Missing file \"{path}\"") 
+                : Result<string>.Ok(path);
+        }
+
+        private long GetMemoryUsage(IEnumerable<Process> processes)
+        {
+            return processes?.Sum(p => p.WorkingSet64) ?? 0;
+        }
+
+        private Task<Result<string>> RunProcessAsync(string filename, string arguments = null, string workingDirectory = null)
+        {
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = filename,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            };
+
+            if (arguments != null)
+                processStartInfo.Arguments = arguments;
+            if (workingDirectory != null)
+                processStartInfo.WorkingDirectory = workingDirectory;
+
+            return Task.Run(() => RunProcess(processStartInfo));
+            
+        }
+
+        private static Result<string> RunProcess(ProcessStartInfo processStartInfo)
+        {
+            try
+            {
+                var process = Process.Start(processStartInfo);
+                if (process == null)
+                    return Result.Fail<string>($"Process {processStartInfo.FileName} failed to run");
+                
+                var output = new List<string>();
+
+                process.OutputDataReceived += (sender, e) => output.Add($"{e.Data}");
+                process.BeginOutputReadLine();
+                process.ErrorDataReceived += (sender, e) => output.Add($"ERR: {e.Data}");
+                process.BeginErrorReadLine();
+            
+                process.WaitForExit();
+                process.Close();
+
+                return Result<string>.Ok(string.Join(Environment.NewLine, output));
+            }
+            catch (Exception e)
+            {
+                return Result<string>.Fail($"Process {processStartInfo.FileName} failed to run with exception: {e.Message}");
+            }
         }
     }
 }
