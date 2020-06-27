@@ -154,12 +154,12 @@ namespace Nexus.Prophecy.Worker.Telegram
         private NodeResponse ListServices()
         {
             var services = controlService.ListServices().ToArray();
-
+            
             string FormatService(ServiceInfo s)
             {
                 var sb = new StringBuilder();
                 sb.Append(string.IsNullOrEmpty(s.MetaInfo.Url) ? $"{s.Name}: " : $"[{s.Name}]({s.MetaInfo.Url}): ");
-                sb.Append(s.IsRunning ? "*ON*👌" : "*OFF*❌");
+                sb.Append(s.IsRunning ? $"*ON*👌 {s.MemoryUsage / (1024f * 1024)}mb" : "*OFF*❌");
                 
                 return sb.ToString();
             }

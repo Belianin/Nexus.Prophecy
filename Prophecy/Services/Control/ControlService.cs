@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Threading.Tasks;
 using Nexus.Core;
 using Nexus.Prophecy.Configuration;
@@ -136,7 +137,10 @@ namespace Nexus.Prophecy.Services.Control
                 MetaInfo = new ServiceMetaInfo
                 {
                     Url = serviceSettings.MetaInfo?.Url ?? string.Empty
-                }
+                },
+                MemoryUsage = liveServices.TryGetValue(service, out var procs) 
+                    ? GetMemoryUsage(procs)
+                    : 0
             };
         }
 
@@ -175,6 +179,32 @@ namespace Nexus.Prophecy.Services.Control
             return !File.Exists(path) 
                 ? Result<string>.Fail($"Missing file \"{path}\"") 
                 : Result<string>.Ok(path);
+        }
+
+        private long GetMemoryUsage(IEnumerable<Process> processes)
+        {
+            return processes.Sum(p => p.PrivateMemorySize64);
+        }
+
+        public (long total, long free) GetSystemMemoryInfo()
+        {
+            var winQuery = new ObjectQuery("SELECT * FROM Win32_LogicalMemoryConfiguration");
+
+            var searcher = new ManagementObjectSearcher(winQuery);
+
+            var total = 0L;
+            var free = 0L;
+
+            foreach (var o in searcher.Get())
+            {
+                var item = (ManagementObject) o;
+                Console.WriteLine("Total Space = " + item["TotalPageFileSpace"]);
+                Console.WriteLine("Total Physical Memory = " + item["TotalPhysicalMemory"]);
+                Console.WriteLine("Total Virtual Memory = " + item["TotalVirtualMemory"]);
+                Console.WriteLine("Available Virtual Memory = " + item["AvailableVirtualMemory"]);
+            }
+
+            return (total, free);
         }
     }
 }

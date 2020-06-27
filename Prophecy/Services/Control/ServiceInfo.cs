@@ -9,5 +9,6 @@ namespace Nexus.Prophecy.Services.Control
         public bool IsRunning { get; set; }
         public ServiceMetaInfo MetaInfo { get; set; }
         public Dictionary<string, string> Commands { get; set; }
+        public long MemoryUsage { get; set; }
     }
 }
