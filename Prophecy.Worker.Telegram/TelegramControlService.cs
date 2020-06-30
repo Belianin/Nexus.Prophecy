@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Nexus.Core;
 using Nexus.Logging;
 using Nexus.Prophecy.Configuration;
 using Nexus.Prophecy.Services.Control;
@@ -56,6 +57,7 @@ namespace Nexus.Prophecy.Worker.Telegram
         private async Task OnCallbackAsync(CallbackQuery callback)
         {
             var message = callback.Message;
+            log.Info($"[{message.Chat.Id}]: Received a callback: {callback.Data} from {AuthorToString(message)}");
             if (!settings.Interface.Telegram.Admins.Contains(message.Chat.Id))
             {
                 log.Important($"Forbidden access to telegram user \"{message.Chat.Id}\" {message.From.Username ?? "(no nickname)"}");
@@ -88,8 +90,48 @@ namespace Nexus.Prophecy.Worker.Telegram
                 Actions.RunCommand => await RunCommandAsync(callback.Service, callback.Command).ConfigureAwait(false),
                 Actions.Start => await StartServiceAsync(callback.Service).ConfigureAwait(false),
                 Actions.Stop => await StopServiceAsync(callback.Service).ConfigureAwait(false),
+                Actions.Build => await BuildServiceAsync(callback.Service).ConfigureAwait(false),
                 _ => ListServices()
             };
+
+        private async Task<NodeResponse> BuildServiceAsync(string service)
+        {
+            var serviceInfo = controlService.GetServiceInfo(service);
+            if (serviceInfo.IsFail)
+                return serviceInfo.Error;
+
+            if (serviceInfo.Value.IsRunning)
+                return new NodeResponse
+                {
+                    Text = $"{service} is running right now. Turn it off before doing build",
+                    Markup = new InlineKeyboardMarkup(new[]
+                    {
+                        new InlineKeyboardButton
+                        {
+                            Text = "Stop",
+                            CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Stop)
+                        }
+                    })
+                };
+            
+            var result = await controlService.BuildAsync(service).ConfigureAwait(false);
+            var newServiceInfo = GetServiceInfo(service);
+
+            if (result.IsSuccess)
+            {
+                return new NodeResponse
+                {
+                    Text = $"{service} successfully built\n*OUTPUT:*\n{result.Value}\n\n{newServiceInfo.Text}",
+                    Markup = newServiceInfo.Markup
+                };
+            }
+
+            return new NodeResponse
+            {
+                Text = $"Unable to build {service}\n*ERROR:*\n{result.Error}\n\n{newServiceInfo.Text}",
+                Markup = newServiceInfo.Markup
+            };
+        }
 
         private async Task OnMessageAsync(Message message)
         {
@@ -200,6 +242,11 @@ namespace Nexus.Prophecy.Worker.Telegram
             var markup = new[]
             {
                 new[] {startStopButton},
+                new[] {new InlineKeyboardButton
+                {
+                    Text = "Build",
+                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Build)
+                }},
                 result.Value.Commands.Select(c => new InlineKeyboardButton
                 {
                     Text = c.Key,

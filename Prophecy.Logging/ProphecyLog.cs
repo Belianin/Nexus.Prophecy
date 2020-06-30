@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json;
@@ -25,7 +26,7 @@ namespace Nexus.Logging.Prophecy
             var request = new Request
             {
                 LogLevel = logEvent.Level.ToString(),
-                Message = logEvent.Message
+                Message = $"{string.Join("", logEvent.Context.Select(s => $"[{s}] "))}{logEvent.Message}"
             };
             
             try

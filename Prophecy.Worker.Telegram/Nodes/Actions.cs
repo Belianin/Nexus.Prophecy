@@ -7,5 +7,6 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
         public const string ListServices = "list-services";
         public const string Start = "start";
         public const string Stop = "stop";
+        public const string Build = "build";
     }
 }

@@ -57,20 +57,22 @@ namespace Nexus.Prophecy.Configuration
 
         private static string GetAssemblyInfo(string csprojPath)
         {
-            var reader = XmlReader.Create(File.OpenRead(csprojPath));
-                
-            return reader.ReadToFollowing("AssemblyInfo") 
-                ? reader.Value
-                : null;
+            var document = new XmlDocument();
+            document.Load(csprojPath);;
+
+            var elements = document.GetElementsByTagName("AssemblyInfo");
+            
+            return elements.Count == 0 ? null : elements[0].InnerText;
         }
 
         private static string GetTargetFramework(string csprojPath)
         {
-            var reader = XmlReader.Create(File.OpenRead(csprojPath));
-                
-            return reader.ReadToFollowing("TargetFramework") 
-                ? reader.Value.Split(",").FirstOrDefault(f => f.Contains("netcoreapp"))
-                : null;
+            var document = new XmlDocument();
+            document.Load(csprojPath);;
+
+            var targetFramework = document.GetElementsByTagName("TargetFramework")[0];
+            
+            return targetFramework.InnerText.Split(",").FirstOrDefault(f => f.Contains("netcoreapp"));
         }
     }
     
