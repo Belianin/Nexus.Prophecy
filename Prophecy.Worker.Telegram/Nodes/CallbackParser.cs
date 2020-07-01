@@ -1,13 +1,15 @@
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Nexus.Prophecy.Worker.Telegram.Nodes
 {
     public static class CallbackParser
     {
-        public static string CreateCallbackData(string service, string command, string action)
+        public static string CreateCallbackData(string service, string script, string command)
         {
-            // не хардкодить
-            return $"service={service};command={command ?? string.Empty};action={action}";
+            var sb = new StringBuilder();
+            return $"service={service};{(script != null ? $"script={script};" : "")}command={command}";
         }
 
         public static CallbackData ParseCallback(string query)
@@ -17,19 +19,21 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
                 .Select(s => s.Split("="))
                 .ToDictionary(k => k[0], v => v[1]);
 
-            return new CallbackData
-            {
-                Service = data["service"],
-                Command = data["command"],
-                Action = data["action"]
-            };
+            return new CallbackData(data);
         }
     }
 
     public class CallbackData
     {
-        public string Service { get; set; }
-        public string Command { get; set; }
-        public string Action { get; set; }
+        private readonly Dictionary<string, string> arguments;
+
+        public CallbackData(Dictionary<string, string> arguments)
+        {
+            this.arguments = arguments;
+        }
+
+        public string Service => arguments["service"];
+        public string Script => arguments["script"];
+        public string Command => arguments["command"];
     }
 }

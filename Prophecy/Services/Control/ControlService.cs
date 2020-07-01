@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Nexus.Core;
 using Nexus.Prophecy.Configuration;
@@ -14,25 +15,15 @@ namespace Nexus.Prophecy.Services.Control
     public class ControlService : IControlService
     {
         private readonly ProphecySettings settings;
-        
-        private const string DirectoryName = "Commands";
 
         public ControlService(ProphecySettings settings)
         {
             this.settings = settings;
-            if (!Directory.Exists(DirectoryName))
-                Directory.CreateDirectory(DirectoryName);
-
-            foreach (var service in settings.Services)
-            {
-                if (!Directory.Exists(service.Key))
-                    Directory.CreateDirectory(service.Key);
-            }
         }
 
         public Task<Result<string>> RunCommandAsync(string service, string command)
         {
-            var filename = TryGetCommandFilename(service, command);
+            var filename = TryGetScriptFilename(service, command);
             
             return filename.IsFail ? Task.FromResult(filename) : RunProcessAsync(command);
         }
@@ -57,11 +48,16 @@ namespace Nexus.Prophecy.Services.Control
                         CreateNoWindow = false,
                         UseShellExecute = true,
                         RedirectStandardError = false,
-                        RedirectStandardOutput = false
+                        RedirectStandardOutput = false,
+                        WorkingDirectory = paths.Root
                     };
 
-                    Process.Start(processInfo);
+                    var process = Process.Start(processInfo);
 
+                    Thread.Sleep(1000 * 5);
+                    if (process == null || process.HasExited)
+                        return $"Failed to run {service}";
+                    
                     return GetServiceInfo(service);
                 }
                 catch (Exception e)
@@ -77,16 +73,23 @@ namespace Nexus.Prophecy.Services.Control
             if (processes.Length == 0)
                 return $"{service} is already stopped";
 
-            await Task.Run(() =>
+            void CloseTask(Process process)
             {
-                foreach (var process in processes)
-                {
-                    process.Close();
-                    process.WaitForExit();
-                }
-                
-            }).ConfigureAwait(false);
+                process.CloseMainWindow();
+                process.Close();
+            }
 
+            try
+            {
+                await Task.WhenAll(processes.Select(p => Task.Run(() => CloseTask(p)))).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                return $"Failed to stop {service}. Error: {e.Message}";
+            }
+
+            await Task.Delay(1000 * 5).ConfigureAwait(false);
+            
             return GetServiceInfo(service);
         }
 
@@ -98,9 +101,9 @@ namespace Nexus.Prophecy.Services.Control
             var serviceInfo = serviceInfoResult.Value;
 
             var script = new StringBuilder()
-                .AppendLine("git reset --hard HEAD")
-                .AppendLine("git pull")
-                .AppendLine("dotnet build -c Release")
+                .Append("/c git reset --hard HEAD")
+                .Append(" && git pull")
+                .Append(" && dotnet build -c Release")
                 .ToString();
 
             return RunProcessAsync("cmd.exe", script, serviceInfo.Path);
@@ -122,7 +125,7 @@ namespace Nexus.Prophecy.Services.Control
             
             return new ServiceInfo
             {
-                Commands = serviceSettings.Commands ?? new Dictionary<string, string>(),
+                Commands = serviceSettings.Scripts ?? new Dictionary<string, string>(),
                 IsRunning = isRunning,
                 Name = service,
                 Path = serviceSettings.Path,
@@ -137,19 +140,19 @@ namespace Nexus.Prophecy.Services.Control
 
         public Result RemoveCommand(string service, string command)
         {
-            var filename = TryGetCommandFilename(service, command);
+            var filename = TryGetScriptFilename(service, command);
             if (filename.IsFail)
                 return filename;
             
             File.Delete(filename);
-            settings.Services[service].Commands.Remove(command);
+            settings.Services[service].Scripts.Remove(command);
             
             return Result.Ok();
         }
 
         public Result UpdateCommand(string service, string command, string commandBody)
         {
-            var filename = TryGetCommandFilename(service, command);
+            var filename = TryGetScriptFilename(service, command);
             if (filename.IsFail)
                 return filename;
             
@@ -179,18 +182,17 @@ namespace Nexus.Prophecy.Services.Control
             return (total, free);
         }
 
-        private Result<string> TryGetCommandFilename(string service, string command)
+        private Result<string> TryGetScriptFilename(string service, string script)
         {
-            if (!settings.Services.TryGetValue(service, out var commands))
+            if (!settings.Services.TryGetValue(service, out var serviceInfo))
                 return Result.Fail<string>($"Unknown service \"{service}\"");
             
-            if (!commands.Commands.TryGetValue(command, out var filename))
-                return Result<string>.Fail($"Unknown command \"{command}\"");
+            if (!serviceInfo.Scripts.TryGetValue(script, out var filename))
+                return Result<string>.Fail($"Unknown command \"{script}\"");
 
-            var path = Path.Combine(DirectoryName, service, filename);
-            return !File.Exists(path) 
-                ? Result<string>.Fail($"Missing file \"{path}\"") 
-                : Result<string>.Ok(path);
+            return !File.Exists(filename) 
+                ? Result<string>.Fail($"Missing file \"{filename}\"") 
+                : Result<string>.Ok(filename);
         }
 
         private long GetMemoryUsage(IEnumerable<Process> processes)
@@ -203,7 +205,7 @@ namespace Nexus.Prophecy.Services.Control
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = filename,
-                CreateNoWindow = true,
+                CreateNoWindow = false,
                 UseShellExecute = false,
                 RedirectStandardError = true,
                 RedirectStandardOutput = true
@@ -230,10 +232,14 @@ namespace Nexus.Prophecy.Services.Control
 
                 process.OutputDataReceived += (sender, e) => output.Add($"{e.Data}");
                 process.BeginOutputReadLine();
-                process.ErrorDataReceived += (sender, e) => output.Add($"ERR: {e.Data}");
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                        output.Add($"ERR: {e.Data}");
+                };
                 process.BeginErrorReadLine();
             
-                process.WaitForExit();
+                process.WaitForExit(1000 * 60);
                 process.Close();
 
                 return Result<string>.Ok(string.Join(Environment.NewLine, output));

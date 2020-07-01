@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -10,6 +11,7 @@ using Nexus.Prophecy.Configuration;
 using Nexus.Prophecy.Services.Control;
 using Nexus.Prophecy.Worker.Telegram.Nodes;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -69,8 +71,11 @@ namespace Nexus.Prophecy.Worker.Telegram
             var callbackData = CallbackParser.ParseCallback(callback.Data);
 
             var response = await ReplyOnCallback(callbackData).ConfigureAwait(false);
-            
-            await SendResponseAsync(response, message).ConfigureAwait(false);
+
+            if (response.Markup is InlineKeyboardMarkup markup)
+                await EditMessageAsync(response.Text, markup, message).ConfigureAwait(false);
+            else
+                await SendResponseAsync(response, message).ConfigureAwait(false);
 
             try
             {
@@ -83,14 +88,15 @@ namespace Nexus.Prophecy.Worker.Telegram
         }
 
         private async Task<NodeResponse> ReplyOnCallback(CallbackData callback) =>
-            callback.Action switch
+            callback.Command switch
             {
-                Actions.ListCommands => GetServiceInfo(callback.Service),
-                Actions.ListServices => ListServices(),
-                Actions.RunCommand => await RunCommandAsync(callback.Service, callback.Command).ConfigureAwait(false),
-                Actions.Start => await StartServiceAsync(callback.Service).ConfigureAwait(false),
-                Actions.Stop => await StopServiceAsync(callback.Service).ConfigureAwait(false),
-                Actions.Build => await BuildServiceAsync(callback.Service).ConfigureAwait(false),
+                Commands.ServiceInfo => GetServiceInfo(callback.Service),
+                Commands.ListServices => ListServices(),
+                Commands.RunScript => await RunCommandAsync(callback.Service, callback.Script).ConfigureAwait(false),
+                Commands.Start => await StartServiceAsync(callback.Service).ConfigureAwait(false),
+                Commands.Stop => await StopServiceAsync(callback.Service).ConfigureAwait(false),
+                Commands.Build => await BuildServiceAsync(callback.Service).ConfigureAwait(false),
+                Commands.Rebuild => await RebuildAsync(callback.Service).ConfigureAwait(false),
                 _ => ListServices()
             };
 
@@ -103,25 +109,34 @@ namespace Nexus.Prophecy.Worker.Telegram
             if (serviceInfo.Value.IsRunning)
                 return new NodeResponse
                 {
-                    Text = $"{service} is running right now. Turn it off before doing build",
-                    Markup = new InlineKeyboardMarkup(new[]
-                    {
-                        new InlineKeyboardButton
+                    Text = $"{service} сейчас запущен. Можно перезапустить автоматически или остановить вручную",
+                    Markup = new InlineKeyboardMarkup(
+                        new[]
                         {
-                            Text = "Stop",
-                            CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Stop)
-                        }
-                    })
+                            new []
+                            {
+                                RebuildButton(service), 
+                                StopButton(service)
+                            },
+                            new []
+                            {
+                                BackButton()
+                            }
+                        })
                 };
             
             var result = await controlService.BuildAsync(service).ConfigureAwait(false);
             var newServiceInfo = GetServiceInfo(service);
 
+            var maxOutputLength = 256;
+            var output = result.Value.Length < maxOutputLength 
+                ? result.Value 
+                : "..." + result.Value.Substring(result.Value.Length - maxOutputLength);
             if (result.IsSuccess)
             {
                 return new NodeResponse
                 {
-                    Text = $"{service} successfully built\n*OUTPUT:*\n{result.Value}\n\n{newServiceInfo.Text}",
+                    Text = $"{service} successfully built\n*OUTPUT:*\n{output}\n\n{newServiceInfo.Text}",
                     Markup = newServiceInfo.Markup
                 };
             }
@@ -131,6 +146,18 @@ namespace Nexus.Prophecy.Worker.Telegram
                 Text = $"Unable to build {service}\n*ERROR:*\n{result.Error}\n\n{newServiceInfo.Text}",
                 Markup = newServiceInfo.Markup
             };
+        }
+
+        private async Task<NodeResponse> RebuildAsync(string service)
+        {
+            var rebuildResult = await controlService.RebuildAsync(service).ConfigureAwait(false);
+            if (rebuildResult.IsFail)
+                return new NodeResponse
+                {
+                    Text = $"_REBUILD_ упал с ошибкой.\n*СКОРЕЕ ВСЕГО СЕРВИС ЛЕЖИТ*\n_Ошибка_:{rebuildResult.Error}"
+                };
+            
+            return GetServiceInfo(service);
         }
 
         private async Task OnMessageAsync(Message message)
@@ -192,28 +219,28 @@ namespace Nexus.Prophecy.Worker.Telegram
                 Text = result.Value,
             };
         }
+        
+        private string FormatServiceInfo(ServiceInfo info)
+        {
+            var sb = new StringBuilder();
+            sb.Append(string.IsNullOrEmpty(info.MetaInfo.Url) ? $"{info.Name}: " : $"[{info.Name}]({info.MetaInfo.Url}): ");
+            sb.Append(info.IsRunning ? $"*ON*👌 {info.MemoryUsage / (1024f * 1024)}mb" : "*OFF*❌");
+                
+            return sb.ToString();
+        }
 
         private NodeResponse ListServices()
         {
             var services = controlService.ListServices().ToArray();
-            
-            string FormatService(ServiceInfo s)
-            {
-                var sb = new StringBuilder();
-                sb.Append(string.IsNullOrEmpty(s.MetaInfo.Url) ? $"{s.Name}: " : $"[{s.Name}]({s.MetaInfo.Url}): ");
-                sb.Append(s.IsRunning ? $"*ON*👌 {s.MemoryUsage / (1024f * 1024)}mb" : "*OFF*❌");
-                
-                return sb.ToString();
-            }
 
-            var text = $"Выберите сервис:\n{string.Join("\n", services.Select(FormatService))}";
+            var text = $"Выберите сервис:\n{string.Join("\n", services.Select(FormatServiceInfo))}";
             return new NodeResponse
             {
                 Text = text,
                 Markup = new InlineKeyboardMarkup(services.Select(s => new InlineKeyboardButton
                 {
                     Text = s.Name,
-                    CallbackData = CallbackParser.CreateCallbackData(s.Name, null, Actions.ListCommands)
+                    CallbackData = CallbackParser.CreateCallbackData(s.Name, null, Commands.ServiceInfo)
                 }))
             };
         }
@@ -228,35 +255,31 @@ namespace Nexus.Prophecy.Worker.Telegram
                 };
 
             var startStopButton = result.Value.IsRunning
-                ? new InlineKeyboardButton
-                {
-                    Text = "Stop",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Stop)
-                }
+                ? StopButton(service)
                 : new InlineKeyboardButton
                 {
-                    Text = "Start",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Start)
+                    Text = "Start 🚀",
+                    CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Start)
                 };
 
             var markup = new[]
             {
-                new[] {startStopButton},
-                new[] {new InlineKeyboardButton
+                new[] {startStopButton, new InlineKeyboardButton
                 {
-                    Text = "Build",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Actions.Build)
+                    Text = "Build 🔨",
+                    CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Build)
                 }},
                 result.Value.Commands.Select(c => new InlineKeyboardButton
                 {
                     Text = c.Key,
-                    CallbackData = CallbackParser.CreateCallbackData(service, c.Key, Actions.RunCommand)
-                })
+                    CallbackData = CallbackParser.CreateCallbackData(service, c.Key, Commands.RunScript)
+                }),
+                new[] {BackButton()}
             };
             
             return new NodeResponse
             {
-                Text = $"Список доступных комманд для {service}",
+                Text = $"{FormatServiceInfo(result.Value)}\n\nСписок доступных комманд для {service}",
                 Markup = new InlineKeyboardMarkup(markup)
             };
         }
@@ -265,16 +288,47 @@ namespace Nexus.Prophecy.Worker.Telegram
         {
             return SendResponseAsync(response.Text, response.Markup, message);
         }
-        
-        private Task SendResponseAsync(string text, IReplyMarkup markup, Message message)
+
+        private Task EditMessageAsync(string text, InlineKeyboardMarkup markup, Message message)
         {
-            return client.SendTextMessageAsync(
-                message.Chat.Id,
-                text,
-                ParseMode.Markdown,
-                true,
-                replyMarkup:
-                markup);
+            try
+            {
+                return client.EditMessageTextAsync(
+                    message.Chat.Id.ToString(),
+                    message.MessageId,
+                    text,
+                    ParseMode.Markdown,
+                    false,
+                    markup);
+            }
+            catch (MessageIsNotModifiedException)
+            {
+                return Task.CompletedTask;
+            }
+        }
+        
+        private async Task SendResponseAsync(string text, IReplyMarkup markup, Message message)
+        {
+            foreach (var chunk in Chunk(text, 4096))
+            {
+                await client.SendTextMessageAsync(
+                    message.Chat.Id,
+                    chunk,
+                    ParseMode.Markdown,
+                    true,
+                    replyMarkup:
+                    markup)
+                    .ConfigureAwait(false);   
+            }
+        }
+        
+        
+        private static IEnumerable<string> Chunk(string str, int chunkSize)
+        {
+            if (str.Length < chunkSize)
+                return new[] {str};
+            return Enumerable.Range(0, str.Length / chunkSize)
+                .Select(i => str.Substring(i * chunkSize, chunkSize));
         }
 
         private static string AuthorToString(Message message)
@@ -286,5 +340,23 @@ namespace Nexus.Prophecy.Worker.Telegram
 
             return sb.ToString();
         }
+
+        private InlineKeyboardButton StopButton(string service) => new InlineKeyboardButton
+        {
+            Text = "Stop ⛔️",
+            CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Stop)
+        };
+
+        private InlineKeyboardButton BackButton() => new InlineKeyboardButton
+        {
+            Text = "🔙",
+            CallbackData = CallbackParser.CreateCallbackData(null, null, Commands.ListServices)
+        };
+
+        private InlineKeyboardButton RebuildButton(string service) => new InlineKeyboardButton
+        {
+            Text = "Rebuild 🛎",
+            CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Rebuild)
+        };
     }
 }

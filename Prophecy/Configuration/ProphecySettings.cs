@@ -16,7 +16,7 @@ namespace Nexus.Prophecy.Configuration
         {
             public string Path { get; set; }
             public ServiceMetaInfo MetaInfo { get; set; }
-            public Dictionary<string, string> Commands { get; set; }
+            public Dictionary<string, string> Scripts { get; set; }
         }
 
         public class InterfaceSettings

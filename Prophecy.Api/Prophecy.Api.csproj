@@ -13,7 +13,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Nexus.Core" Version="1.0.0" />
+      <PackageReference Include="Nexus.Core" Version="1.0.3" />
       <PackageReference Include="Nexus.Logging" Version="1.0.3" />
       <PackageReference Include="Telegram.Bot" Version="15.7.1" />
     </ItemGroup>
