@@ -5,6 +5,8 @@
         <Nullable>enable</Nullable>
         <AssemblyName>Prophecy</AssemblyName>
         <RootNamespace>Nexus.Prophecy.Api</RootNamespace>
+        <ApplicationIcon>prophecy.ico</ApplicationIcon>
+        <Company>Nexus Foundation</Company>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
