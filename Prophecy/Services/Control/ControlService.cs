@@ -73,10 +73,25 @@ namespace Nexus.Prophecy.Services.Control
             if (processes.Length == 0)
                 return $"{service} is already stopped";
 
-            void CloseTask(Process process)
+            static void CloseTask(Process process)
             {
-                process.CloseMainWindow();
-                process.Close();
+                var didSendCloseMessage = process.CloseMainWindow();
+                if (!didSendCloseMessage)
+                {
+                    process.Kill();
+                    if (process.WaitForExit(1000 * 10))
+                        process.Close();
+                }
+                else
+                {
+                    if (!process.WaitForExit(1000 * 10))
+                    {
+                        process.Kill();
+                        if (process.WaitForExit(1000 * 10))
+                            process.Close();
+                    }
+                    process.Close();
+                }    
             }
 
             try
