@@ -118,7 +118,7 @@ namespace Nexus.Prophecy.Services.Control
             var script = new StringBuilder()
                 .Append("/c git reset --hard HEAD")
                 .Append(" && git pull")
-                .Append(" && dotnet build -c Release")
+                .Append($" && dotnet build {serviceInfo.MetaInfo.Project ?? service} -c Release")
                 .ToString();
 
             return RunProcessAsync("cmd.exe", script, serviceInfo.Path);
