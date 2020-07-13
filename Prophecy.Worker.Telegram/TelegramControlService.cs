@@ -97,6 +97,7 @@ namespace Nexus.Prophecy.Worker.Telegram
                 Commands.Stop => await StopServiceAsync(callback.Service).ConfigureAwait(false),
                 Commands.Build => await BuildServiceAsync(callback.Service).ConfigureAwait(false),
                 Commands.Rebuild => await RebuildAsync(callback.Service).ConfigureAwait(false),
+                Commands.Restart => await RestartAsync(callback.Service).ConfigureAwait(false),
                 _ => ListServices()
             };
 
@@ -155,6 +156,18 @@ namespace Nexus.Prophecy.Worker.Telegram
                 return new NodeResponse
                 {
                     Text = $"_REBUILD_ упал с ошибкой.\n*СКОРЕЕ ВСЕГО СЕРВИС ЛЕЖИТ*\n_Ошибка_:{rebuildResult.Error}"
+                };
+            
+            return GetServiceInfo(service);
+        }
+
+        private async Task<NodeResponse> RestartAsync(string service)
+        {
+            var restartResult = await controlService.RestartAsync(service).ConfigureAwait(false);
+            if (restartResult.IsFail)
+                return new NodeResponse
+                {
+                    Text = $"_RESTART_ упал с ошибкой.\n*СКОРЕЕ ВСЕГО СЕРВИС ЛЕЖИТ*\n_Ошибка_:{restartResult.Error}"
                 };
             
             return GetServiceInfo(service);
@@ -254,21 +267,19 @@ namespace Nexus.Prophecy.Worker.Telegram
                     Text = result.Error
                 };
 
-            var startStopButton = result.Value.IsRunning
+            var firstLineButtons = new List<InlineKeyboardButton>();
+            firstLineButtons.Add(result.Value.IsRunning
                 ? StopButton(service)
-                : new InlineKeyboardButton
-                {
-                    Text = "Start 🚀",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Start)
-                };
+                : StartButton(service));
+            
+            if (result.Value.IsRunning)
+                firstLineButtons.Add(RestartButton(service));
+            
+            firstLineButtons.Add(BuildButton(service));
 
             var markup = new[]
             {
-                new[] {startStopButton, new InlineKeyboardButton
-                {
-                    Text = "Build 🔨",
-                    CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Build)
-                }},
+                firstLineButtons,
                 result.Value.Commands.Select(c => new InlineKeyboardButton
                 {
                     Text = c.Key,
@@ -341,6 +352,7 @@ namespace Nexus.Prophecy.Worker.Telegram
             return sb.ToString();
         }
 
+        // Buttons.Start(service)
         private InlineKeyboardButton StopButton(string service) => new InlineKeyboardButton
         {
             Text = "Stop ⛔️",
@@ -357,6 +369,24 @@ namespace Nexus.Prophecy.Worker.Telegram
         {
             Text = "Rebuild 🛎",
             CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Rebuild)
+        };
+
+        private InlineKeyboardButton BuildButton(string service) => new InlineKeyboardButton
+        {
+            Text = "Build 🔨",
+            CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Build)
+        };
+        
+        private InlineKeyboardButton StartButton(string service) => new InlineKeyboardButton
+        {
+            Text = "Start 🚀",
+            CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Start)
+        };
+        
+        private InlineKeyboardButton RestartButton(string service) => new InlineKeyboardButton
+        {
+            Text = "Restart ♻️",
+            CallbackData = CallbackParser.CreateCallbackData(service, null, Commands.Restart)
         };
     }
 }

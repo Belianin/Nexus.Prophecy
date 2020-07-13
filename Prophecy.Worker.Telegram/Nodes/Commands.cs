@@ -9,5 +9,6 @@ namespace Nexus.Prophecy.Worker.Telegram.Nodes
         public const string Stop = "stop";
         public const string Build = "build";
         public const string Rebuild = "rebuild";
+        public const string Restart = "restart";
     }
 }

@@ -21,5 +21,18 @@ namespace Nexus.Prophecy.Services.Control
             
             return Result.Ok();
         }
+        
+        public static async Task<Result> RestartAsync(this IControlService controlService, string service)
+        {
+            var stopResult = await controlService.StopAsync(service).ConfigureAwait(false);
+            if (stopResult.IsFail)
+                return Result.Fail($"Rebuild fails on \"stop-stage\":\nError: {stopResult.Error}");
+
+            var runResult = await controlService.StartAsync(service).ConfigureAwait(false);
+            if (runResult.IsFail)
+                return Result.Fail($"Rebuild fails on \"run-stage\". Error: {runResult.Error}");
+            
+            return Result.Ok();
+        }
     }
 }
