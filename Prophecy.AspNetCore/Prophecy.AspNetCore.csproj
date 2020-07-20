@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>Nexus.Prophecy.AspNetCore</AssemblyName>
+        <RootNamespace>Nexus.Prophecy.AspNetCore</RootNamespace>
+        <Version>1.0.0</Version>
+        <Authors>Belianin</Authors>
+        <Company>Nexus Foundation</Company>
+        <RepositoryUrl>https://github.com/belianin/nexus.prophecy</RepositoryUrl>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    </ItemGroup>
+
+</Project>

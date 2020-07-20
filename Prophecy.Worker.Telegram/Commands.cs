@@ -1,4 +1,4 @@
-namespace Nexus.Prophecy.Worker.Telegram.Nodes
+namespace Nexus.Prophecy.Worker.Telegram
 {
     public static class Commands
     {

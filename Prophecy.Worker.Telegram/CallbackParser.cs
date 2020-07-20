@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Nexus.Prophecy.Worker.Telegram.Nodes
+namespace Nexus.Prophecy.Worker.Telegram
 {
     public static class CallbackParser
     {

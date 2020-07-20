@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.Worker.Telegram", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.Logging", "Prophecy.Logging\Prophecy.Logging.csproj", "{BD68E217-750E-42AF-9407-65F3662F9FCF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.AspNetCore", "Prophecy.AspNetCore\Prophecy.AspNetCore.csproj", "{0DE08122-B106-4E1E-8065-31802DACD614}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prophecy.AspNetCore.Logging", "Prophecy.AspNetCore.Logging\Prophecy.AspNetCore.Logging.csproj", "{46A9E0FA-EB7E-4197-84E5-972BFC72142B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{BD68E217-750E-42AF-9407-65F3662F9FCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD68E217-750E-42AF-9407-65F3662F9FCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD68E217-750E-42AF-9407-65F3662F9FCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DE08122-B106-4E1E-8065-31802DACD614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DE08122-B106-4E1E-8065-31802DACD614}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DE08122-B106-4E1E-8065-31802DACD614}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DE08122-B106-4E1E-8065-31802DACD614}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46A9E0FA-EB7E-4197-84E5-972BFC72142B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46A9E0FA-EB7E-4197-84E5-972BFC72142B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46A9E0FA-EB7E-4197-84E5-972BFC72142B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46A9E0FA-EB7E-4197-84E5-972BFC72142B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

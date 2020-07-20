@@ -1,15 +1,15 @@
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace Nexus.Prophecy.Worker.Telegram.Nodes
+namespace Nexus.Prophecy.Worker.Telegram
 {
-    public class NodeResponse
+    public class UserResponse
     {
         public string Text { get; set; }
         public IReplyMarkup Markup { get; set; }
         
-        public static implicit operator NodeResponse(string text)
+        public static implicit operator UserResponse(string text)
         {
-            return new NodeResponse
+            return new UserResponse
             {
                 Text = text
             };
