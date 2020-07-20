@@ -4,15 +4,15 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <RootNamespace>Nexus.Logging.Prophecy</RootNamespace>
         <AssemblyName>Nexus.Logging.Prophecy</AssemblyName>
-        <Version>1.0.2</Version>
+        <Version>1.0.3</Version>
         <Authors>Belianin</Authors>
         <Company>Nexus Foundation</Company>
-        <RepositoryUrl>https://github.com/belianin/nexus</RepositoryUrl>
+        <RepositoryUrl>https://github.com/belianin/nexus.prophecy</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-      <PackageReference Include="Nexus.Logging" Version="1.0.3" />
+      <PackageReference Include="Nexus.Logging" Version="1.0.5" />
     </ItemGroup>
 
 </Project>

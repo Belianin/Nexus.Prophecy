@@ -13,12 +13,12 @@ namespace Nexus.Logging.Prophecy
         private readonly string url;
         private readonly ILog log;
 
-        public ProphecyLog(string url, ILog log)
+        public ProphecyLog(string url, ILog log = null)
         {
             client = new HttpClient();
             
             this.url = url;
-            this.log = log;
+            this.log = log ?? new SilentLog();
         }
 
         protected override void InnerLog(LogEvent logEvent)
