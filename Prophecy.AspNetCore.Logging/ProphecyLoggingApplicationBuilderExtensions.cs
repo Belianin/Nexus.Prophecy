@@ -2,18 +2,26 @@
 using Nexus.Logging;
 using Nexus.Logging.Prophecy;
 
-namespace Prophecy.AspNetCore.Logging
+namespace Nexus.Prophecy.AspNetCore.Logging
 {
     public static class ProphecyLoggingApplicationBuilderExtensions
     {
         public static IServiceCollection AddProphecyLogging(
-            this IServiceCollection serviceCollection, string prophecyUrl)
+            this IServiceCollection serviceCollection,
+            string prophecyUrl,
+            ILog innerLog = null)
         {
             return serviceCollection.AddSingleton<ILog>(sp =>
             {
-                var log = sp.GetService<ILog>();
+                var log = innerLog ?? sp.GetService<ILog>();
                 
-                return new ProphecyLog(prophecyUrl, log);
+                var prophecyLog = new ProphecyLog(prophecyUrl, log)
+                    .OnlyErrors();
+
+                if (log == null)
+                    return prophecyLog;
+                
+                return new AggregationLog(log, prophecyLog);
             });
         }
     }
