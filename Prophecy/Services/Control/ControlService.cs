@@ -108,15 +108,16 @@ namespace Nexus.Prophecy.Services.Control
             return GetServiceInfo(service);
         }
 
-        public Task<Result<string>> BuildAsync(string service)
+        public Task<Result<string>> BuildAsync(string service, string branch = "master")
         {
             var serviceInfoResult = GetServiceInfo(service);
             if (serviceInfoResult.IsFail)
                 return Task.FromResult(Result<string>.Fail(serviceInfoResult.Error));
             var serviceInfo = serviceInfoResult.Value;
 
-            var script = new StringBuilder()
-                .Append("/c git reset --hard HEAD")
+            var script = new StringBuilder("/c ")
+                .Append("git reset --hard HEAD")
+                .Append($" && git checkout -f {branch}")
                 .Append(" && git pull")
                 .Append($" && dotnet build {serviceInfo.MetaInfo.Project ?? service} -c Release")
                 .ToString();

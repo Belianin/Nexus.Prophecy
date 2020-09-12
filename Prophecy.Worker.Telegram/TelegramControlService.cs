@@ -99,7 +99,7 @@ namespace Nexus.Prophecy.Worker.Telegram
                 _ => ListServices()
             };
 
-        private async Task<UserResponse> BuildServiceAsync(string service)
+        private async Task<UserResponse> BuildServiceAsync(string service, string branch = "master")
         {
             var serviceInfo = controlService.GetServiceInfo(service);
             if (serviceInfo.IsFail)
@@ -124,7 +124,7 @@ namespace Nexus.Prophecy.Worker.Telegram
                         })
                 };
             
-            var result = await controlService.BuildAsync(service).ConfigureAwait(false);
+            var result = await controlService.BuildAsync(service, branch).ConfigureAwait(false);
             var newServiceInfo = GetServiceInfo(service);
 
             var maxOutputLength = 256;
@@ -182,7 +182,10 @@ namespace Nexus.Prophecy.Worker.Telegram
                 return;
             }
 
+            var commands = message.Text.Split(" ", StringSplitOptions.RemoveEmptyEntries);
             // help и все остальное
+            if (commands.Length == 3 && commands[0] == "/build")
+                await BuildServiceAsync(commands[1], commands[2]).ConfigureAwait(false);
             if (message.Text == "/start")
                 await SendResponseAsync(ListServices(), message).ConfigureAwait(false);
             else if (message.Text == "/help")
